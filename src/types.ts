@@ -21,7 +21,7 @@ export interface ReportData {
 }
 
 export const CHECKLIST_ITEMS: ChecklistItemDef[] = [
-  { id: 201, category: 'Nhân sự', title: 'Có đủ nv làm việc trong ngày?', placeholder: 'Có/Không. Diễn giải (nếu có)', example: 'Có. Đủ người' },
+  { id: 201, category: 'Nhân sự', title: 'Số người làm việc trong ca. Có đủ nv làm việc không?', placeholder: 'Có/Không. Diễn giải (nếu có)', example: 'Có. Đủ người' },
   { id: 202, category: 'Nhân sự', title: 'Có nv xin nghỉ hẳn không?', placeholder: 'Có/Không. Diễn giải (nếu có)', example: 'Không' },
   { id: 203, category: 'Nhân sự', title: 'NV mới đi làm', placeholder: 'Ghi chú NV mới (nếu có)', example: '1 phụ bếp mới tên Nam' },
   { id: 204, category: 'Vận hành bếp', title: 'Hàng về có đủ và đảm bảo chất lượng không?', placeholder: 'Có/Không. Diễn giải (nếu có)', example: 'Có. Đủ hàng' },

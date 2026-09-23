@@ -37,6 +37,7 @@ export function ReportForm({ data, onChange }: ReportFormProps) {
               <option value="98VTP">98 Vũ Trọng Phụng</option>
               <option value="01 ĐD">01 Đặng Dung</option>
               <option value="3D NVH">3D Nguyễn Văn Huyên</option>
+              <option value="12 ĐT">12 Đào Tấn</option>
             </select>
           </div>
           <div>

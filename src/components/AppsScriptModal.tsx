@@ -1,4 +1,17 @@
-// ============================================================================
+import React, { useState } from 'react';
+import { X, Copy, Check, Code } from 'lucide-react';
+
+interface AppsScriptModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function AppsScriptModal({ isOpen, onClose }: AppsScriptModalProps) {
+  const [copied, setCopied] = useState(false);
+
+  if (!isOpen) return null;
+
+  const scriptCode = `// ============================================================================
 // CẤU HÌNH FILE THỨ 2 (LƯU ĐỒNG THỜI VÀO 2 FILE GOOGLE SHEETS)
 // Dán ID của file thứ 2 vào đây (chuỗi ký tự nằm giữa /d/ và /edit trên link của file 2)
 // ============================================================================
@@ -20,9 +33,9 @@ function doPost(e) {
     // Tìm kiếm sheet không phân biệt chữ hoa/thường và khoảng trắng thừa
     if (!sheet) {
       var sheets = spreadsheet.getSheets();
-      var cleanTarget = sheetName.trim().toLowerCase().replace(/\s+/g, " ");
+      var cleanTarget = sheetName.trim().toLowerCase().replace(/\\s+/g, " ");
       for (var s = 0; s < sheets.length; s++) {
-        var sName = sheets[s].getName().trim().toLowerCase().replace(/\s+/g, " ");
+        var sName = sheets[s].getName().trim().toLowerCase().replace(/\\s+/g, " ");
         if (sName === cleanTarget || (cleanTarget.indexOf("ql k") !== -1 && sName.indexOf("ql k") !== -1)) {
           sheet = sheets[s];
           break;
@@ -167,10 +180,7 @@ function doPost(e) {
       var recordRange1 = sheet.getRange(targetRow1, 1, rowsToSave.length, 12);
       recordRange1.setValues(rowsToSave);
 
-      // VẼ ĐƯỜNG BAO CHO ĐỢT NHẬP (Phân biệt với các lần nhập khác):
-      // - Dòng đầu tiên: top = true (kẻ viền trên màu đen)
-      // - Dòng cuối cùng: bottom = true (kẻ viền dưới màu đen)
-      // - Còn lại giữ nguyên: left = null, right = null, vertical = null, horizontal = null
+      // VẼ ĐƯỜNG BAO CHO ĐỢT NHẬP
       recordRange1.setBorder(true, null, true, null, null, null, "#000000", SpreadsheetApp.BorderStyle.SOLID);
       recordRange1.setVerticalAlignment("middle");
       recordRange1.setWrap(true);
@@ -247,7 +257,6 @@ function doPost(e) {
           var recordRange2 = sheet2.getRange(targetRow2, 1, rowsToSave.length, 12);
           recordRange2.setValues(rowsToSave);
 
-          // VẼ ĐƯỜNG BAO CHO ĐỢT NHẬP FILE 2 (Tương tự File 1: dòng 1 top=true, dòng cuối bottom=true, còn lại giữ nguyên)
           recordRange2.setBorder(true, null, true, null, null, null, "#000000", SpreadsheetApp.BorderStyle.SOLID);
           recordRange2.setVerticalAlignment("middle");
           recordRange2.setWrap(true);
@@ -731,4 +740,86 @@ function doPost(e) {
   } catch(error) {
     return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": error.toString()})).setMimeType(ContentService.MimeType.JSON);
   }
+}`;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(scriptCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    } catch {
+      // Fallback
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div 
+        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-200 bg-slate-50">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-indigo-100 text-indigo-700 rounded-lg">
+              <Code className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800 text-base sm:text-lg">Mã Google Apps Script (Mới nhất)</h3>
+              <p className="text-xs text-slate-500">Giữ nguyên 100% các báo cáo khác | Cập nhật vị trí cột BC Bếp</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-4 sm:p-5 overflow-y-auto space-y-4 text-sm flex-1">
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs sm:text-sm">
+            <span className="font-bold">Lưu ý sau khi dán:</span> Nhấn <strong>Deploy</strong> (Triển khai) &gt; <strong>Manage deployments</strong> &gt; Chỉnh sửa và chọn <strong>New version</strong> (Phiên bản mới) để cập nhật code đang chạy.
+          </div>
+
+          <div className="relative">
+            <pre className="p-4 bg-slate-900 text-slate-100 rounded-xl overflow-x-auto text-xs font-mono leading-relaxed max-h-[350px]">
+              {scriptCode}
+            </pre>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap gap-3 justify-end items-center">
+          <button
+            onClick={handleCopy}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all shadow-sm ${
+              copied
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+            }`}
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4" />
+                Đã sao chép mã!
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                Sao chép toàn bộ mã
+              </>
+            )}
+          </button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2.5 text-slate-600 hover:bg-slate-200 rounded-xl font-medium text-sm transition-colors"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

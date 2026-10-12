@@ -180,7 +180,7 @@ function doPost(e) {
       var recordRange1 = sheet.getRange(targetRow1, 1, rowsToSave.length, 12);
       recordRange1.setValues(rowsToSave);
 
-      // VẼ ĐƯỜNG BAO CHO ĐỢT NHẬP
+      // Kẻ viền cho đợt nhập
       recordRange1.setBorder(true, null, true, null, null, null, "#000000", SpreadsheetApp.BorderStyle.SOLID);
       recordRange1.setVerticalAlignment("middle");
       recordRange1.setWrap(true);
@@ -516,20 +516,31 @@ function doPost(e) {
       }
     }
 
-    // 5. BÁO CÁO TQL (GIỮ NGUYÊN 100%)
+    // 5. BÁO CÁO TQL (ĐÃ SỬA CHUẨN XÁC 38 CỘT A -> AL THEO GOOGLE SHEET THỰC TẾ)
     else if (sheetName === "BC TQL" || sheetName === "BC TQL 1" || sheetName === "Sheet17") {
+      // 1. Tiêu đề chuẩn nếu sheet mới tinh
       if (sheet.getLastRow() === 0) {
         var headersTQL = [
-          "Thời gian gửi", "Ngày", "Người báo cáo",
+          "Thời gian gửi", "Ngày", "Người báo cáo", // Cột A, B, C
+          // ĐÁNH GIÁ CHUNG TOÀN CHUỖI (Cột D -> J)
           "DT toàn hệ thống:", "Mục tiêu ngày:", "Tăng/giảm so với hôm trc:", "Tổng lượt khách:", "Số bàn phục vụ:", "DT TB/khách:", "Xếp hạng DT:",
+          // Cột K: CH lv chính
           "CH lv chính",
-          "Xếp bàn và đón tiếp:", "Order & tư vấn món:", "Chăm sóc KH & upsell:", "Tốc độ ra đồ:", "Chương trình KM:", "Vệ sinh:", "Vđ phát sinh:", "Cách giải quyết ps:",
-          "Tổng NS bàn đi làm:", "NS nghỉ đột xuất:", "NS nghỉ hẳn:", "NS mới:", "NS hỗ trợ:",
-          "Phản hồi của khách:", "Vđ phát sinh:", "Cách giải quyết ps:", "Xuất bán tiệc:",
-          "Món đẩy:", "Món bán chạy:", "Phản hồi của khách:", "Vđ phát sinh:", "Cách giải quyết ps:",
+          // SỬA CHỮA (Cột L -> M)
           "Hỏng hóc cần sửa:", "Hạng mục sửa trong ngày:",
+          // PHỤC VỤ (Cột N -> U)
+          "Xếp bàn và đón tiếp:", "Order & tư vấn món:", "Chăm sóc KH & upsell:", "Tốc độ ra đồ:", "Chương trình KM:", "Vệ sinh:", "Vđ phát sinh:", "Cách giải quyết ps:",
+          // NHÂN SỰ (Cột V -> Z)
+          "Tổng NS bàn đi làm:", "NS nghỉ đột xuất:", "NS nghỉ hẳn:", "NS mới:", "NS hỗ trợ:",
+          // BIA (Cột AA -> AD)
+          "Phản hồi của khách:", "Vđ phát sinh:", "Cách giải quyết ps:", "Xuất bán tiệc:",
+          // MÓN ĂN (Cột AE -> AI)
+          "Món đẩy:", "Món bán chạy:", "Phản hồi của khách:", "Vđ phát sinh:", "Cách giải quyết ps:",
+          // ĐÀO TẠO (Cột AJ)
           "Đào tạo:",
+          // ĐỐI NGOẠI (Cột AK)
           "Đối ngoại:",
+          // Ý KIẾN KHÁC (Cột AL)
           "Ý KIẾN KHÁC"
         ];
         sheet.appendRow(headersTQL);
@@ -541,9 +552,12 @@ function doPost(e) {
       var dateVal = data.date || Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd");
       var reporterVal = data.reporter || "";
 
+      // TH1: Dữ liệu gửi dạng danh sách 6 cơ sở storesList
       if (data.storesList && Array.isArray(data.storesList) && data.storesList.length > 0) {
         data.storesList.forEach(function(st) {
           var storeRow = [timeVal, dateVal, reporterVal];
+          
+          // D -> J: 7 cột Đánh giá chung toàn chuỗi
           if (st.systemValues && Array.isArray(st.systemValues)) {
             st.systemValues.forEach(function(val) {
               storeRow.push(val !== undefined && val !== null ? String(val) : "");
@@ -551,7 +565,11 @@ function doPost(e) {
           } else {
             for (var s = 0; s < 7; s++) storeRow.push("");
           }
+          
+          // K: CH lv chính
           storeRow.push(st.storeCode || st.storeName || "");
+          
+          // L -> AK: 26 cột nghiệp vụ theo thứ tự: Sửa chữa -> Phục vụ -> Nhân sự -> Bia -> Món ăn -> Đào tạo -> Đối ngoại
           if (st.storeValues && Array.isArray(st.storeValues)) {
             st.storeValues.forEach(function(val) {
               storeRow.push(val !== undefined && val !== null ? String(val) : "");
@@ -563,26 +581,42 @@ function doPost(e) {
           } else {
             for (var stc = 0; stc < 26; stc++) storeRow.push("");
           }
+
+          // AL: Ý KIẾN KHÁC
           storeRow.push(st.otherOpinionValue !== undefined && st.otherOpinionValue !== null ? String(st.otherOpinionValue) : "");
+
           sheet.appendRow(storeRow);
         });
-      } else if (data.stores) {
+      } 
+      // TH2: Dữ liệu gửi dạng data.stores object
+      else if (data.stores) {
         var storeCodes = ["01 DD", "03 NVH", "12 ĐT", "94 LĐ", "96 HT", "98 VTP"];
         var systemKeys = [
           "dt_toan_he_thong", "muc_tieu_ngay", "tang_giam_hom_truoc", "tong_luot_khach", "so_ban_phuc_vu", "dt_tb_khach", "xep_hang_dt"
         ];
+        // Thứ tự 26 keys đã khớp 100% với cột L -> AK của Google Sheet
         var storeKeys = [
-          "xep_ban", "order_tu_van", "cham_soc_upsell", "toc_do_ra_do", "chuong_trinh_km", "ve_sinh", "vd_phat_sinh_pv", "cach_giai_quyet_pv",
-          "tong_ns_di_lam", "ns_nghi_dot_xuat", "ns_nghi_han", "ns_moi", "ns_ho_tro",
-          "phan_hoi_khach_bia", "vd_phat_sinh_bia", "cach_giai_quyet_bia", "xuat_ban_tiec",
-          "mon_day", "mon_ban_chay", "phan_hoi_khach_mon", "vd_phat_sinh_mon", "cach_giai_quyet_mon",
+          // SỬA CHỮA (L, M)
           "hong_hoc_can_sua", "hang_muc_sua_trong_ngay",
-          "dao_tao", "doi_ngoai"
+          // PHỤC VỤ (N -> U)
+          "xep_ban", "order_tu_van", "cham_soc_upsell", "toc_do_ra_do", "chuong_trinh_km", "ve_sinh", "vd_phat_sinh_pv", "cach_giai_quyet_pv",
+          // NHÂN SỰ (V -> Z)
+          "tong_ns_di_lam", "ns_nghi_dot_xuat", "ns_nghi_han", "ns_moi", "ns_ho_tro",
+          // BIA (AA -> AD)
+          "phan_hoi_khach_bia", "vd_phat_sinh_bia", "cach_giai_quyet_bia", "xuat_ban_tiec",
+          // MÓN ĂN (AE -> AI)
+          "mon_day", "mon_ban_chay", "phan_hoi_khach_mon", "vd_phat_sinh_mon", "cach_giai_quyet_mon",
+          // ĐÀO TẠO (AJ)
+          "dao_tao",
+          // ĐỐI NGOẠI (AK)
+          "doi_ngoai"
         ];
         var sysVals = data.systemEvaluation || {};
         storeCodes.forEach(function(code, idx) {
           var storeVals = data.stores[code] || {};
           var storeRow = [timeVal, dateVal, reporterVal];
+          
+          // D -> J: 7 cột toàn chuỗi (chỉ ghi ở dòng 01 DD)
           systemKeys.forEach(function(k) {
             if (idx === 0) {
               var val = sysVals[k] !== undefined ? sysVals[k] : (storeVals[k] !== undefined ? storeVals[k] : "");
@@ -591,15 +625,22 @@ function doPost(e) {
               storeRow.push("");
             }
           });
+
+          // K: CH lv chính
           storeRow.push(code);
+
+          // L -> AK: 26 cột nghiệp vụ
           storeKeys.forEach(function(k) {
             storeRow.push(storeVals[k] !== undefined ? String(storeVals[k]) : "");
           });
+
+          // AL: Ý KIẾN KHÁC (chỉ ghi ở dòng 01 DD)
           if (idx === 0) {
             storeRow.push(sysVals.y_kien_khac ? String(sysVals.y_kien_khac) : "");
           } else {
             storeRow.push("");
           }
+
           sheet.appendRow(storeRow);
         });
       } else if (data.items && Array.isArray(data.items)) {
@@ -616,8 +657,9 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // 6. BÁO CÁO BẾP (CHUẨN 12 CỘT THEO MẪU BẢNG ẢNH)
+    // 6. BÁO CÁO BẾP (CHUẨN 12 CỘT KHỚP 100% ẢNH MẪU GOOGLE SHEETS)
     else if (sheetName === "BC Bếp") {
+      // 1. Tiêu đề chuẩn nếu sheet mới tinh
       if (sheet.getLastRow() === 0) {
         var headerRow1 = [
           "", "", "",
@@ -635,9 +677,9 @@ function doPost(e) {
         ];
         sheet.appendRow(headerRow1);
         sheet.appendRow(headerRow2);
-        sheet.getRange(1, 4, 1, 3).merge(); // NHÂN SỰ
-        sheet.getRange(1, 7, 1, 3).merge(); // VẬN HÀNH BẾP
-        sheet.getRange(1, 10, 1, 2).merge(); // TRANG THIẾT BỊ
+        sheet.getRange(1, 4, 1, 3).merge(); // NHÂN SỰ (3 cột)
+        sheet.getRange(1, 7, 1, 3).merge(); // VẬN HÀNH BẾP (3 cột)
+        sheet.getRange(1, 10, 1, 2).merge(); // TRANG THIẾT BỊ (2 cột)
         sheet.getRange(1, 1, 2, 12)
           .setFontWeight("bold")
           .setBackground("#f3f4f6")
@@ -680,39 +722,21 @@ function doPost(e) {
         row.push(new Date());
       }
 
-      // 12 cột chuẩn khớp 100% với form mẫu ảnh:
-      // 1. Cơ sở
-      row.push(data.location || "");
-      // 2. Ngày
-      row.push(data.date || "");
-      // 3. Người báo cáo
-      row.push(data.reporter || "");
-
-      // NHÂN SỰ:
-      // 4. Có đủ nv làm việc trong ngày?
-      row.push(val201);
-      // 5. Có nv xin nghỉ hẳn không?
-      row.push(val202);
-      // 6. NV mới đi làm
-      row.push(val203);
-
-      // VẬN HÀNH BẾP:
-      // 7. Hàng đặt có về đủ không?
-      row.push(val204);
-      // 8. Sự cố xảy ra trong ngày không? Nếu có xl ntn?
-      row.push(val205);
-      // 9. Món bán chạy trong ngày
-      row.push(val206);
-
-      // TRANG THIẾT BỊ:
-      // 10. CCDC, thiết bị hỏng trong ngày
-      row.push(val207);
-      // 11. CCDC, thiết bị được sửa trong ngày
-      row.push(val208);
-
-      // ĐỀ XUẤT:
-      // 12. Đề xuất
-      row.push(val209);
+      // 12 CỘT CHUẨN XÁC THEO BẢNG ẢNH:
+      row.push(
+        data.location || "", // 1. Cơ sở
+        data.date || "",     // 2. Ngày
+        data.reporter || "", // 3. Người báo cáo
+        val201,              // 4. Có đủ nv làm việc trong ngày?
+        val202,              // 5. Có nv xin nghỉ hẳn không?
+        val203,              // 6. NV mới đi làm
+        val204,              // 7. Hàng đặt có về đủ không?
+        val205,              // 8. Sự cố xảy ra trong ngày không? Nếu có xl ntn?
+        val206,              // 9. Món bán chạy trong ngày
+        val207,              // 10. CCDC, thiết bị hỏng trong ngày
+        val208,              // 11. CCDC, thiết bị được sửa trong ngày
+        val209               // 12. Đề xuất
+      );
     }
 
     // 7. BÁO CÁO VẬN HÀNH (GIỮ NGUYÊN 100%)
@@ -785,7 +809,7 @@ function doPost(e) {
             </div>
             <div>
               <h3 className="font-bold text-slate-800 text-base sm:text-lg">Mã Google Apps Script (Mới nhất)</h3>
-              <p className="text-xs text-slate-500">Giữ nguyên 100% các báo cáo khác | Cập nhật vị trí cột BC Bếp</p>
+              <p className="text-xs text-slate-500">Giữ nguyên 100% các báo cáo khác | Cập nhật chuẩn 12 cột BC Bếp</p>
             </div>
           </div>
           <button

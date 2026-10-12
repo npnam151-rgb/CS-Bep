@@ -1,10 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { toPng } from 'html-to-image';
-import { Download, Camera, CheckCircle2, AlertCircle, Code } from 'lucide-react';
+import { Download, Camera, CheckCircle2, AlertCircle } from 'lucide-react';
 import { ReportForm } from './components/ReportForm';
 import { ReportPreview } from './components/ReportPreview';
 import { ReportImageModal } from './components/ReportImageModal';
-import { AppsScriptModal } from './components/AppsScriptModal';
 import { ReportData, CHECKLIST_ITEMS } from './types';
 
 // TODO: Thay thế đường dẫn này bằng URL Web App của Google Apps Script của bạn
@@ -25,7 +24,6 @@ export default function App() {
   const [exportSuccess, setExportSuccess] = useState(false);
   const [sheetStatus, setSheetStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [modalOpen, setModalOpen] = useState(false);
-  const [showScriptModal, setShowScriptModal] = useState(false);
   const [exportedImageUrl, setExportedImageUrl] = useState<string | null>(null);
   const [exportedFileName, setExportedFileName] = useState<string>('');
   const previewRef = useRef<HTMLDivElement>(null);
@@ -166,34 +164,23 @@ export default function App() {
               </h1>
             </div>
             
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowScriptModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-indigo-600 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-200 transition-colors"
-                title="Xem mã Google Apps Script"
-              >
-                <Code className="w-4 h-4 text-indigo-600" />
-                <span>Mã Apps Script</span>
-              </button>
-              
-              <button
-                onClick={handleExportImage}
-                disabled={isExporting}
-                className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {isExporting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    {sheetStatus === 'saving' ? 'Đang lưu dữ liệu...' : 'Đang xuất ảnh...'}
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4" />
-                    Tải ảnh báo cáo
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              onClick={handleExportImage}
+              disabled={isExporting}
+              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isExporting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  {sheetStatus === 'saving' ? 'Đang lưu dữ liệu...' : 'Đang xuất ảnh...'}
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  Tải ảnh báo cáo
+                </>
+              )}
+            </button>
           </div>
         </div>
       </header>
@@ -268,12 +255,6 @@ export default function App() {
         onClose={() => setModalOpen(false)}
         imageUrl={exportedImageUrl}
         fileName={exportedFileName}
-      />
-
-      {/* Modal xem và copy mã Google Apps Script */}
-      <AppsScriptModal
-        isOpen={showScriptModal}
-        onClose={() => setShowScriptModal(false)}
       />
     </div>
   );

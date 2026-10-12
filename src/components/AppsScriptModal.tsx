@@ -616,24 +616,34 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // 6. BÁO CÁO BẾP
+    // 6. BÁO CÁO BẾP (CHUẨN 12 CỘT THEO MẪU BẢNG ẢNH)
     else if (sheetName === "BC Bếp") {
       if (sheet.getLastRow() === 0) {
-        var headersBep = [
-          "Thời gian gửi", "Cơ sở", "Ngày", "Người báo cáo",
-          "Số người làm việc trong ca? Có đủ nv làm việc không?", "",
-          "Có nv xin nghỉ hẳn không?", "",
-          "NV mới đi làm",
-          "Hàng đặt có về đủ không?",
-          "Sự cố xảy ra trong ngày không?",
-          "Món bán chạy trong ngày",
-          "CCDC, thiết bị hỏng trong ngày",
-          "CCDC, thiết bị được sửa trong ngày",
+        var headerRow1 = [
+          "", "", "",
+          "NHÂN SỰ", "", "",
+          "VẬN HÀNH BẾP", "", "",
+          "TRANG THIẾT BỊ", "",
+          "ĐỀ XUẤT"
+        ];
+        var headerRow2 = [
+          "Cơ sở", "Ngày", "Người báo cáo",
+          "Có đủ nv làm việc trong ngày?", "Có nv xin nghỉ hẳn không?", "NV mới đi làm",
+          "Hàng đặt có về đủ không?", "Sự cố xảy ra trong ngày không? Nếu có xl ntn?", "Món bán chạy trong ngày",
+          "CCDC, thiết bị hỏng trong ngày", "CCDC, thiết bị được sửa trong ngày",
           "Đề xuất"
         ];
-        sheet.appendRow(headersBep);
-        sheet.getRange(1, 1, 1, headersBep.length).setFontWeight("bold").setBackground("#f3f4f6");
-        sheet.setFrozenRows(1);
+        sheet.appendRow(headerRow1);
+        sheet.appendRow(headerRow2);
+        sheet.getRange(1, 4, 1, 3).merge(); // NHÂN SỰ
+        sheet.getRange(1, 7, 1, 3).merge(); // VẬN HÀNH BẾP
+        sheet.getRange(1, 10, 1, 2).merge(); // TRANG THIẾT BỊ
+        sheet.getRange(1, 1, 2, 12)
+          .setFontWeight("bold")
+          .setBackground("#f3f4f6")
+          .setHorizontalAlignment("center")
+          .setVerticalAlignment("middle");
+        sheet.setFrozenRows(2);
       }
       
       var itemMap = {};
@@ -656,43 +666,52 @@ function doPost(e) {
       var val208 = itemMap[208] !== undefined ? itemMap[208] : (itemMap["idx_7"] || "");
       var val209 = itemMap[209] !== undefined ? itemMap[209] : (itemMap["idx_8"] || "");
 
-      // Cột A: Thời gian gửi
-      // Cột B: Cơ sở
-      // Cột C: Ngày
-      // Cột D: Người báo cáo
-      row.push(new Date(), data.location, data.date || "", data.reporter || "");
+      // Kiểm tra xem bảng thực tế có cột 'Thời gian gửi' ở đầu hay bắt đầu ngay bằng 'Cơ sở'
+      var hasTimestamp = false;
+      var headerRowIdx = sheet.getLastRow() >= 2 ? 2 : (sheet.getLastRow() >= 1 ? 1 : 0);
+      if (headerRowIdx > 0) {
+        var h1 = (sheet.getRange(headerRowIdx, 1).getValue() || "").toString().trim().toLowerCase();
+        if (h1.indexOf("thời gian") !== -1 || h1.indexOf("time") !== -1) {
+          hasTimestamp = true;
+        }
+      }
 
-      // Cột E: Số người làm việc trong ca? Có đủ nv làm việc không?
+      if (hasTimestamp) {
+        row.push(new Date());
+      }
+
+      // 12 cột chuẩn khớp 100% với form mẫu ảnh:
+      // 1. Cơ sở
+      row.push(data.location || "");
+      // 2. Ngày
+      row.push(data.date || "");
+      // 3. Người báo cáo
+      row.push(data.reporter || "");
+
+      // NHÂN SỰ:
+      // 4. Có đủ nv làm việc trong ngày?
       row.push(val201);
-
-      // Cột F: để trống
-      row.push("");
-
-      // Cột G: Có nv xin nghỉ hẳn không?
+      // 5. Có nv xin nghỉ hẳn không?
       row.push(val202);
-
-      // Cột H: để trống
-      row.push("");
-
-      // Cột I: NV mới đi làm
+      // 6. NV mới đi làm
       row.push(val203);
 
-      // Cột J: Hàng đặt có về đủ không?
+      // VẬN HÀNH BẾP:
+      // 7. Hàng đặt có về đủ không?
       row.push(val204);
-
-      // Cột K: Sự cố xảy ra trong ngày không?
+      // 8. Sự cố xảy ra trong ngày không? Nếu có xl ntn?
       row.push(val205);
-
-      // Cột L: Món bán chạy trong ngày
+      // 9. Món bán chạy trong ngày
       row.push(val206);
 
-      // Cột M: CCDC, thiết bị hỏng trong ngày
+      // TRANG THIẾT BỊ:
+      // 10. CCDC, thiết bị hỏng trong ngày
       row.push(val207);
-
-      // Cột N: CCDC, thiết bị được sửa trong ngày
+      // 11. CCDC, thiết bị được sửa trong ngày
       row.push(val208);
 
-      // Cột O: Đề xuất
+      // ĐỀ XUẤT:
+      // 12. Đề xuất
       row.push(val209);
     }
 

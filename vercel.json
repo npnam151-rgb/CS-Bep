@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://biaoi.vercel.app/bep",
+      "permanent": true
+    }
+  ]
+}
